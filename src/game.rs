@@ -140,10 +140,17 @@ impl EventHandler for Game {
         canvas.draw(&score_text, DrawParam::default().dest(Vec2::new(10.0, 10.0)));
 
         if self.game_over {
-            let game_over_text = Text::new(TextFragment::new("Game Over! Press R to restart").scale(32.0));
             let screen_coords = ctx.gfx.drawable_size();
-            let dest = Vec2::new(screen_coords.0 / 2.0 - 150.0, screen_coords.1 / 2.0 - 16.0);
-            canvas.draw(&game_over_text, DrawParam::default().dest(dest));
+
+            // First line: "Game Over!"
+            let game_over_text = Text::new(TextFragment::new("Game Over!").scale(28.0));
+            let dest1 = Vec2::new(screen_coords.0 / 2.0 - 60.0, screen_coords.1 / 2.0 + 30.0);
+            canvas.draw(&game_over_text, DrawParam::default().dest(dest1));
+
+            // Second line: "Press R to restart"
+            let restart_text = Text::new(TextFragment::new("Press R to restart").scale(20.0));
+            let dest2 = Vec2::new(screen_coords.0 / 2.0 - 75.0, screen_coords.1 / 2.0 + 65.0);
+            canvas.draw(&restart_text, DrawParam::default().dest(dest2));
         }
 
         canvas.finish(ctx)?;
