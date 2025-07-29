@@ -19,6 +19,9 @@ Thumbs.db
 # Log files
 *.log
 
+# Highscore text
+highscore.txt
+
 # Runtime files
 *.exe
 *.dll

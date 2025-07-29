@@ -6,14 +6,16 @@ use ggez::{
 };
 use ggez::glam::Vec2;
 
-use crate::{audio, food::Food, snake::{Direction, Snake}};
+use crate::{audio, food::Food, snake::{Direction, Snake}, highscore::HighScore};
 
 pub struct Game {
     snake: Snake,
     food: Food,
     score: usize,
+    high_score: HighScore,
     game_over: bool,
     timer: f32,
+    achieved_high_score_this_game: bool, // Track if we got a high score this game
 }
 
 impl Game {
@@ -27,8 +29,10 @@ impl Game {
             snake: Snake::new(),
             food: Food::new(),
             score: 0,
+            high_score: HighScore::new(),
             game_over: false,
             timer: 0.0,
+            achieved_high_score_this_game: false,
         })
     }
 
@@ -111,8 +115,14 @@ impl EventHandler for Game {
             // Check food collision
             if self.snake.head_position() == self.food.position {
                 self.snake.grow();
-                self.food.respawn_safe(&self.snake); // IMPROVED: Use safe respawn
+                self.food.respawn_safe(&self.snake);
                 self.score += 1;
+
+                // Check for new high score (but don't show message yet)
+                if self.high_score.check_and_update(self.score) {
+                    self.achieved_high_score_this_game = true;
+                }
+
                 audio::play_eat_sound();
             }
 
@@ -135,22 +145,36 @@ impl EventHandler for Game {
         self.snake.draw(ctx, &mut canvas)?;
         self.food.draw(ctx, &mut canvas)?;
 
-        // Draw score
+        // Draw score and high score
         let score_text = Text::new(TextFragment::new(format!("Score: {}", self.score)).scale(24.0));
         canvas.draw(&score_text, DrawParam::default().dest(Vec2::new(10.0, 10.0)));
+
+        let high_score_text = Text::new(TextFragment::new(format!("High Score: {}", self.high_score.score)).scale(20.0));
+        canvas.draw(&high_score_text, DrawParam::default().dest(Vec2::new(10.0, 40.0)));
 
         if self.game_over {
             let screen_coords = ctx.gfx.drawable_size();
 
-            // First line: "Game Over!"
-            let game_over_text = Text::new(TextFragment::new("Game Over!").scale(28.0));
-            let dest1 = Vec2::new(screen_coords.0 / 2.0 - 60.0, screen_coords.1 / 2.0 + 30.0);
-            canvas.draw(&game_over_text, DrawParam::default().dest(dest1));
+            // Show high score celebration if achieved this game
+            if self.achieved_high_score_this_game {
+                let new_high_score_text = Text::new(TextFragment::new("NEW HIGH SCORE!").scale(32.0));
+                let dest_high = Vec2::new(screen_coords.0 / 2.0 - 85.0, screen_coords.1 / 2.0 - 10.0);
+                canvas.draw(&new_high_score_text, DrawParam::default().dest(dest_high).color(Color::from_rgb(255, 215, 0))); // Gold
 
-            // Second line: "Press R to restart"
-            let restart_text = Text::new(TextFragment::new("Press R to restart").scale(20.0));
-            let dest2 = Vec2::new(screen_coords.0 / 2.0 - 75.0, screen_coords.1 / 2.0 + 65.0);
-            canvas.draw(&restart_text, DrawParam::default().dest(dest2));
+                // Show restart message below
+                let restart_text = Text::new(TextFragment::new("Press R to restart").scale(20.0));
+                let dest_restart = Vec2::new(screen_coords.0 / 2.0 - 75.0, screen_coords.1 / 2.0 + 30.0);
+                canvas.draw(&restart_text, DrawParam::default().dest(dest_restart));
+            } else {
+                // Regular game over message
+                let game_over_text = Text::new(TextFragment::new("Game Over!").scale(28.0));
+                let dest1 = Vec2::new(screen_coords.0 / 2.0 - 60.0, screen_coords.1 / 2.0 + 30.0);
+                canvas.draw(&game_over_text, DrawParam::default().dest(dest1));
+
+                let restart_text = Text::new(TextFragment::new("Press R to restart").scale(20.0));
+                let dest2 = Vec2::new(screen_coords.0 / 2.0 - 75.0, screen_coords.1 / 2.0 + 65.0);
+                canvas.draw(&restart_text, DrawParam::default().dest(dest2));
+            }
         }
 
         canvas.finish(ctx)?;

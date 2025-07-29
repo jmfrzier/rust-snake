@@ -2,6 +2,7 @@ mod game;
 mod snake;
 mod food;
 mod audio;
+mod highscore;
 
 use ggez::{event::run, ContextBuilder, conf::WindowSetup, conf::WindowMode};
 use game::Game;
